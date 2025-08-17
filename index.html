@@ -205,6 +205,11 @@
       border-radius: 8px;
       cursor: pointer;
     }
+    /* ✅ 본 기사 시각적 표시 */
+    .read-card {
+      opacity: 0.8;
+      border-color: #cbd5e1;
+    }
     @media (max-width: 640px) {
       .news-card { margin: 0 4px; }
     }
@@ -601,7 +606,7 @@
       return '기타';
     }
 
-    // 🔗 뉴스 표시 함수
+    // 🔗 뉴스 표시 함수 (수정됨)
     function displayNews(newsArray) {
       const newsList = document.getElementById('newsList');
       newsList.innerHTML = '';
@@ -617,8 +622,14 @@
         const newsEl = document.createElement('div');
         newsEl.className = "news-card bg-white rounded-2xl shadow-md border border-slate-200";
         
+        // ✅ 본 기사 시각적 표시
+        if (read) {
+          newsEl.classList.add('read-card');
+        }
+        
         newsEl.innerHTML = `
-          <a href="${news.link}" target="_blank" class="block" onclick="markAsRead('${news.link}', '${news.title}', '${news.image}', '${news.source}')">
+          <!-- ✅ 제목/이미지 클릭 시에만 기사 열림 -->
+          <div class="cursor-pointer" onclick="window.open('${news.link}', '_blank'); markAsRead('${news.link}', '${news.title}', '${news.image}', '${news.source}')">
             ${read ? '<div class="read-badge">본 기사</div>' : ''}
             <div class="relative">
               <img src="${news.image}" alt="${news.title}" class="w-full h-48 object-cover" onerror="this.src='https://placehold.co/600x300/9ca3af/ffffff?text=No+Image'">
@@ -643,38 +654,41 @@
                   </svg>
                 </span>
               </div>
-              <div class="share-actions">
-                <div class="share-btn" onclick="event.stopPropagation(); shareToKakao('${news.link}')">카카오톡</div>
-                <div class="share-btn" onclick="event.stopPropagation(); shareToTwitter('${news.link}')">트위터</div>
-                <div class="share-btn" onclick="event.stopPropagation(); copyLink('${news.link}')">복사</div>
-              </div>
-
-              <!-- 커뮤니티 기능 -->
-              <div class="vote-section">
-                <div class="text-sm font-medium mb-2">이 뉴스 어떻게 보세요?</div>
-                <div class="flex gap-2">
-                  <button class="vote-btn vote-buy" onclick="event.stopPropagation(); vote('${news.link}', '매수')">매수</button>
-                  <button class="vote-btn vote-hold" onclick="event.stopPropagation(); vote('${news.link}', '관망')">관망</button>
-                  <button class="vote-btn vote-sell" onclick="event.stopPropagation(); vote('${news.link}', '매도')">매도</button>
-                </div>
-                <div id="vote-display-${news.link}"></div>
-              </div>
-
-              <div class="comments-section">
-                <div class="text-sm font-medium mb-2">의견 남기기</div>
-                <div class="comment-input">
-                  <textarea rows="2" placeholder="의견을 입력하세요..." id="comment-input-${news.link}"></textarea>
-                  <button onclick="event.stopPropagation(); 
-                    const input = document.getElementById('comment-input-${news.link}'); 
-                    if (input.value.trim()) {
-                      addComment('${news.link}', input.value.trim());
-                      input.value = '';
-                    }">등록</button>
-                </div>
-                <div id="comments-${news.link}"></div>
-              </div>
             </div>
-          </a>
+          </div>
+
+          <!-- ✅ 버튼들은 기사 안 열리고 동작 -->
+          <div class="p-5 pt-0">
+            <div class="share-actions">
+              <div class="share-btn" onclick="shareToKakao('${news.link}')">카카오톡</div>
+              <div class="share-btn" onclick="shareToTwitter('${news.link}')">트위터</div>
+              <div class="share-btn" onclick="copyLink('${news.link}')">복사</div>
+            </div>
+
+            <!-- 커뮤니티 기능 -->
+            <div class="vote-section">
+              <div class="text-sm font-medium mb-2">이 뉴스 어떻게 보세요?</div>
+              <div class="flex gap-2">
+                <button class="vote-btn vote-buy" onclick="vote('${news.link}', '매수')">매수</button>
+                <button class="vote-btn vote-hold" onclick="vote('${news.link}', '관망')">관망</button>
+                <button class="vote-btn vote-sell" onclick="vote('${news.link}', '매도')">매도</button>
+              </div>
+              <div id="vote-display-${news.link}"></div>
+            </div>
+
+            <div class="comments-section">
+              <div class="text-sm font-medium mb-2">의견 남기기</div>
+              <div class="comment-input">
+                <textarea rows="2" placeholder="의견을 입력하세요..." id="comment-input-${news.link}"></textarea>
+                <button onclick="const input = document.getElementById('comment-input-${news.link}'); 
+                  if (input.value.trim()) {
+                    addComment('${news.link}', input.value.trim());
+                    input.value = '';
+                  }">등록</button>
+              </div>
+              <div id="comments-${news.link}"></div>
+            </div>
+          </div>
         `;
         
         newsList.appendChild(newsEl);
