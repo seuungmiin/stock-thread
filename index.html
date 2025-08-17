@@ -11,6 +11,7 @@
     .news-card { transition: all 0.3s ease; }
     .news-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
     .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
@@ -27,7 +28,7 @@
 
     <!-- News List -->
     <div id="newsList" class="space-y-6">
-      <p class="text-center text-gray-500">뉴스를 불러오는 중...</p>
+      <p class="text-center text-gray-500 py-8">뉴스를 불러오는 중...</p>
     </div>
 
     <!-- Footer -->
@@ -37,37 +38,48 @@
   </div>
 
   <script>
-    // ✅ 여기에 구글 시트 ID만 넣으면 됩니다
-    const sheetId = '1zixRiVwXn0i9zfL_MGikpju5BzIJKu_p7B4FQ-uVqGc';  // 🔴 이 부분만 나중에 변경
+    // 🔴 여기에 구글 시트 ID만 넣으세요!
+    const sheetId = '1zixRiVwXn0i9zfL_MGikpju5BzIJKu_p7B4FQ-uVqGc';  // 이 부분만 유지
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
 
     async function loadNews() {
+      const newsList = document.getElementById('newsList');
+      newsList.innerHTML = '<p class="text-center text-gray-500 py-8">로딩 중...</p>';
+
       try {
         const response = await fetch(url);
         const csv = await response.text();
-        const rows = csv.split('\n').slice(1).filter(row => row.trim() !== '');
-        const newsList = document.getElementById('newsList');
-        newsList.innerHTML = '';
-
-        if (rows.length === 0) {
-          newsList.innerHTML = '<p class="text-center text-gray-500">뉴스가 없습니다. 텔레그램으로 링크를 보내보세요!</p>';
+        
+        // CSV 파싱
+        const lines = csv.split('\n').filter(line => line.trim() !== '');
+        if (lines.length < 2) {
+          newsList.innerHTML = '<p class="text-center text-gray-500 py-8">뉴스가 없습니다. 텔레그램으로 링크를 보내보세요!</p>';
           return;
         }
 
+        // 첫 줄(헤더) 제외하고 데이터 처리
+        const rows = lines.slice(1);
+        newsList.innerHTML = '';
+
         rows.forEach(row => {
-          const cols = row.split(',').map(col => col.trim().replace(/^"|"$/g, ''));
-          const title = cols[1] || '제목 없음';
-          const link = cols[5] || '#';
-          const summary = cols[2] || '요약 없음';
-          const source = cols[3] || '출처 미상';
-          const date = cols[4] || '오늘';
-          const category = cols[6] || '기타';
+          const cols = row.split(',').map(col => 
+            col.trim()
+             .replace(/^"(.*)"$/, '$1')  // 큰따옴표 제거
+             .replace(/,$/, '')          // 끝에 콤마 제거
+          );
+
+          const title = cols[1]?.length > 0 ? cols[1] : '제목 없음';
+          const link = cols[5]?.startsWith('http') ? cols[5] : '#';
+          const summary = cols[2]?.length > 0 ? cols[2] : '자세한 내용은 링크에서 확인하세요.';
+          const source = cols[3]?.length > 0 ? cols[3] : '출처 미상';
+          const date = cols[4]?.length > 0 ? cols[4] : '오늘';
+          const category = cols[6]?.length > 0 ? cols[6] : '기타';
 
           const newsEl = document.createElement('div');
-          newsEl.className = "news-card bg-white rounded-2xl shadow-md overflow-hidden";
+          newsEl.className = "news-card bg-white rounded-2xl shadow-md overflow-hidden border border-slate-200";
           
           newsEl.innerHTML = `
-            <a href="${link}" target="_blank" class="block p-6">
+            <a href="${link}" target="_blank" class="block p-6 hover:bg-slate-50 transition-colors">
               <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                   ${category}
@@ -75,12 +87,12 @@
                 <span class="text-xs text-gray-500">${date}</span>
               </div>
               <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-2">${title}</h3>
-              <p class="text-gray-600 text-sm mb-4 line-clamp-2">${summary}</p>
-              <div class="flex items-center justify-between">
+              <p class="text-gray-600 text-sm mb-4 line-clamp-3">${summary}</p>
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100">
                 <span class="text-xs text-gray-500">${source}</span>
                 <span class="text-blue-600 text-sm font-medium flex items-center">
                   자세히 보기 
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-1 transition-transform duration-200">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <polyline points="19 12 12 19 5 12"></polyline>
                   </svg>
@@ -91,13 +103,22 @@
           
           newsList.appendChild(newsEl);
         });
+
       } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('newsList').innerHTML = 
-          '<p class="text-center text-red-500">뉴스를 불러오지 못했습니다. 잠시 후 다시 시도하세요.</p>';
+        console.error('뉴스 로딩 오류:', error);
+        newsList.innerHTML = `
+          <div class="text-center p-8 bg-red-50 rounded-2xl border border-red-200">
+            <p class="text-red-600 font-medium mb-2">뉴스를 불러오지 못했습니다</p>
+            <p class="text-red-500 text-sm mb-4">구글 시트 공유 설정을 확인해 주세요</p>
+            <button onclick="location.reload()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors">
+              다시 시도
+            </button>
+          </div>
+        `;
       }
     }
 
+    // 페이지 로드 시 실행
     window.onload = loadNews;
   </script>
 </body>
