@@ -115,7 +115,7 @@
       border-color: #1e40af;
       color: white;
     }
-    .recent-news, .stats-panel, .popular-news {
+    .stats-panel, .popular-news, .recent-news, .community-panel {
       margin: 24px 0;
       padding: 16px;
       background: var(--card-bg);
@@ -159,6 +159,51 @@
       font-weight: bold;
       color: var(--accent);
       min-width: 20px;
+    }
+    .vote-section {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+    .vote-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .vote-buy { background: #10b981; color: white; }
+    .vote-hold { background: #f59e0b; color: white; }
+    .vote-sell { background: #ef4444; color: white; }
+    .comments-section {
+      margin-top: 16px;
+    }
+    .comment {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .comment:last-child {
+      border-bottom: none;
+    }
+    .comment-input {
+      margin-top: 12px;
+    }
+    .comment-input textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      resize: none;
+    }
+    .comment-input button {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
     }
     @media (max-width: 640px) {
       .news-card { margin: 0 4px; }
@@ -257,7 +302,6 @@
       const today = new Date().toDateString();
       let stats = JSON.parse(localStorage.getItem('visitorStats') || '{}');
       
-      // 오늘 데이터 없으면 초기화
       if (stats.lastVisit !== today) {
         stats.todayCount = 0;
         stats.lastVisit = today;
@@ -311,6 +355,73 @@
 
     function isRead(link) {
       return getReadNews().some(item => item.link === link);
+    }
+
+    // ✅ 투표 기능
+    function getVotes() {
+      return JSON.parse(localStorage.getItem('votes') || '{}');
+    }
+
+    function vote(link, choice) {
+      const votes = getVotes();
+      votes[link] = choice;
+      localStorage.setItem('votes', JSON.stringify(votes));
+      updateVoteDisplay(link);
+    }
+
+    function getUserVote(link) {
+      return getVotes()[link];
+    }
+
+    function updateVoteDisplay(link) {
+      const voteDisplay = document.getElementById(`vote-display-${link}`);
+      if (!voteDisplay) return;
+      
+      const votes = getVotes();
+      const choice = votes[link];
+      
+      voteDisplay.innerHTML = `
+        <div class="text-sm text-gray-500">내 투표: <strong>${choice}</strong></div>
+      `;
+    }
+
+    // ✅ 댓글 기능
+    function getComments() {
+      return JSON.parse(localStorage.getItem('comments') || '{}');
+    }
+
+    function addComment(link, text) {
+      const comments = getComments();
+      if (!comments[link]) comments[link] = [];
+      comments[link].unshift({
+        text: text,
+        timestamp: Date.now()
+      });
+      localStorage.setItem('comments', JSON.stringify(comments));
+      updateCommentsDisplay(link);
+    }
+
+    function updateCommentsDisplay(link) {
+      const commentsDisplay = document.getElementById(`comments-${link}`);
+      if (!commentsDisplay) return;
+      
+      const comments = getComments()[link] || [];
+      
+      if (comments.length === 0) {
+        commentsDisplay.innerHTML = '<div class="text-gray-500 text-sm">아직 댓글이 없습니다</div>';
+        return;
+      }
+      
+      commentsDisplay.innerHTML = '';
+      comments.slice(0, 3).forEach(comment => {
+        const commentEl = document.createElement('div');
+        commentEl.className = 'comment';
+        commentEl.innerHTML = `
+          <div class="text-sm">${comment.text}</div>
+          <div class="text-xs text-gray-400">${new Date(comment.timestamp).toLocaleString()}</div>
+        `;
+        commentsDisplay.appendChild(commentEl);
+      });
     }
 
     // 🔍 카테고리 필터
@@ -396,7 +507,6 @@
       const popularNews = document.getElementById('popularNews');
       const countData = JSON.parse(localStorage.getItem('popularNewsCount') || '{}');
       
-      // 조회수 기준 정렬
       const sorted = Object.entries(countData)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3);
@@ -503,6 +613,7 @@
 
       newsArray.forEach(news => {
         const read = isRead(news.link);
+        const userVote = getUserVote(news.link);
         const newsEl = document.createElement('div');
         newsEl.className = "news-card bg-white rounded-2xl shadow-md border border-slate-200";
         
@@ -537,11 +648,42 @@
                 <div class="share-btn" onclick="event.stopPropagation(); shareToTwitter('${news.link}')">트위터</div>
                 <div class="share-btn" onclick="event.stopPropagation(); copyLink('${news.link}')">복사</div>
               </div>
+
+              <!-- 커뮤니티 기능 -->
+              <div class="vote-section">
+                <div class="text-sm font-medium mb-2">이 뉴스 어떻게 보세요?</div>
+                <div class="flex gap-2">
+                  <button class="vote-btn vote-buy" onclick="event.stopPropagation(); vote('${news.link}', '매수')">매수</button>
+                  <button class="vote-btn vote-hold" onclick="event.stopPropagation(); vote('${news.link}', '관망')">관망</button>
+                  <button class="vote-btn vote-sell" onclick="event.stopPropagation(); vote('${news.link}', '매도')">매도</button>
+                </div>
+                <div id="vote-display-${news.link}"></div>
+              </div>
+
+              <div class="comments-section">
+                <div class="text-sm font-medium mb-2">의견 남기기</div>
+                <div class="comment-input">
+                  <textarea rows="2" placeholder="의견을 입력하세요..." id="comment-input-${news.link}"></textarea>
+                  <button onclick="event.stopPropagation(); 
+                    const input = document.getElementById('comment-input-${news.link}'); 
+                    if (input.value.trim()) {
+                      addComment('${news.link}', input.value.trim());
+                      input.value = '';
+                    }">등록</button>
+                </div>
+                <div id="comments-${news.link}"></div>
+              </div>
             </div>
           </a>
         `;
         
         newsList.appendChild(newsEl);
+        
+        // 초기 투표 및 댓글 표시
+        setTimeout(() => {
+          updateVoteDisplay(news.link);
+          updateCommentsDisplay(news.link);
+        }, 100);
       });
     }
 
