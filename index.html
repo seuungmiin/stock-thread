@@ -115,21 +115,33 @@
       border-color: #1e40af;
       color: white;
     }
-    .stats-panel, .popular-news, .recent-news, .community-panel {
+    .popular-news {
       margin: 24px 0;
       padding: 16px;
       background: var(--card-bg);
       border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .stat-item {
+    .popular-item {
       display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
+      gap: 12px;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-color);
     }
-    .stat-item:last-child {
+    .popular-item:last-child {
       border-bottom: none;
+    }
+    .popular-rank {
+      font-weight: bold;
+      color: var(--accent);
+      min-width: 24px;
+      font-size: 18px;
+    }
+    .popular-img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 12px;
     }
     .dark-toggle {
       position: fixed;
@@ -146,69 +158,13 @@
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       z-index: 100;
     }
-    .popular-item {
-      display: flex;
-      gap: 12px;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .popular-item:last-child {
-      border-bottom: none;
-    }
-    .popular-rank {
+    .section-title {
+      font-size: 1.25rem;
       font-weight: bold;
-      color: var(--accent);
-      min-width: 20px;
-    }
-    .vote-section {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border-color);
-    }
-    .vote-btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .vote-buy { background: #10b981; color: white; }
-    .vote-hold { background: #f59e0b; color: white; }
-    .vote-sell { background: #ef4444; color: white; }
-    .comments-section {
-      margin-top: 16px;
-    }
-    .comment {
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .comment:last-child {
-      border-bottom: none;
-    }
-    .comment-input {
-      margin-top: 12px;
-    }
-    .comment-input textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      resize: none;
-    }
-    .comment-input button {
-      margin-top: 8px;
-      padding: 6px 12px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    /* ✅ 본 기사 시각적 표시 */
-    .read-card {
-      opacity: 0.8;
-      border-color: #cbd5e1;
+      margin: 24px 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent);
+      color: var(--text-primary);
     }
     @media (max-width: 640px) {
       .news-card { margin: 0 4px; }
@@ -230,30 +186,6 @@
     <!-- Dark Mode Toggle -->
     <button class="dark-toggle" onclick="toggleDarkMode()">🌙</button>
 
-    <!-- Stats Panel -->
-    <div class="stats-panel">
-      <h3 class="text-lg font-bold mb-3">📊 오늘의 통계</h3>
-      <div class="space-y-2">
-        <div class="stat-item">
-          <span>오늘 방문자</span>
-          <span id="todayVisitors" class="font-bold">0</span>
-        </div>
-        <div class="stat-item">
-          <span>총 방문자</span>
-          <span id="totalVisitors" class="font-bold">0</span>
-        </div>
-        <div class="stat-item">
-          <span>오늘 본 기사</span>
-          <span id="todayViews">0</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Today's Update -->
-    <div id="todayUpdate" class="text-center mb-4 text-sm text-gray-500">
-      <!-- 오늘 업데이트 내용 표시 -->
-    </div>
-
     <!-- Search Bar -->
     <div class="mb-6">
       <input 
@@ -274,19 +206,25 @@
       <button class="filter-btn" onclick="filterNews('기타')">기타</button>
     </div>
 
-    <!-- News List -->
-    <div id="newsList" class="space-y-6">
-      <p class="text-center text-gray-500 py-8">📰 뉴스를 불러오는 중...</p>
+    <!-- Popular News (상단에 표시) -->
+    <h2 class="section-title">🔥 오늘의 인기 뉴스</h2>
+    <div id="popularNews" class="space-y-4">
+      <p class="text-center text-gray-500 py-8">인기 뉴스를 불러오는 중...</p>
     </div>
 
-    <!-- Popular News -->
-    <div id="popularNewsSection" class="popular-news">
-      <h3 class="text-lg font-bold mb-3">🔥 오늘의 인기 뉴스</h3>
-      <div id="popularNews"></div>
+    <!-- Today's Update -->
+    <div id="todayUpdate" class="text-center mb-4 text-sm text-gray-500">
+      <!-- 오늘 업데이트 내용 표시 -->
+    </div>
+
+    <!-- News List -->
+    <h2 class="section-title">최신 뉴스</h2>
+    <div id="newsList" class="space-y-6">
+      <p class="text-center text-gray-500 py-8">뉴스를 불러오는 중...</p>
     </div>
 
     <!-- Recent News -->
-    <div id="recentNewsSection" class="recent-news">
+    <div id="recentNewsSection" class="mt-12">
       <h3 class="text-lg font-bold mb-3">최근 본 뉴스</h3>
       <div id="recentNews"></div>
     </div>
@@ -301,34 +239,6 @@
     let currentFilter = 'all';
     let allNewsData = [];
     let popularNewsCount = {};
-
-    // ✅ 방문자 통계 관리
-    function getVisitorStats() {
-      const today = new Date().toDateString();
-      let stats = JSON.parse(localStorage.getItem('visitorStats') || '{}');
-      
-      if (stats.lastVisit !== today) {
-        stats.todayCount = 0;
-        stats.lastVisit = today;
-        localStorage.setItem('visitorStats', JSON.stringify(stats));
-      }
-      
-      return stats;
-    }
-
-    function incrementVisitor() {
-      let stats = getVisitorStats();
-      stats.todayCount = (stats.todayCount || 0) + 1;
-      stats.totalCount = (stats.totalCount || 0) + 1;
-      localStorage.setItem('visitorStats', JSON.stringify(stats));
-      updateStatsDisplay();
-    }
-
-    function updateStatsDisplay() {
-      const stats = getVisitorStats();
-      document.getElementById('todayVisitors').textContent = stats.todayCount || 0;
-      document.getElementById('totalVisitors').textContent = stats.totalCount || 0;
-    }
 
     // ✅ 본 기사 목록 관리
     function getReadNews() {
@@ -360,73 +270,6 @@
 
     function isRead(link) {
       return getReadNews().some(item => item.link === link);
-    }
-
-    // ✅ 투표 기능
-    function getVotes() {
-      return JSON.parse(localStorage.getItem('votes') || '{}');
-    }
-
-    function vote(link, choice) {
-      const votes = getVotes();
-      votes[link] = choice;
-      localStorage.setItem('votes', JSON.stringify(votes));
-      updateVoteDisplay(link);
-    }
-
-    function getUserVote(link) {
-      return getVotes()[link];
-    }
-
-    function updateVoteDisplay(link) {
-      const voteDisplay = document.getElementById(`vote-display-${link}`);
-      if (!voteDisplay) return;
-      
-      const votes = getVotes();
-      const choice = votes[link];
-      
-      voteDisplay.innerHTML = `
-        <div class="text-sm text-gray-500">내 투표: <strong>${choice}</strong></div>
-      `;
-    }
-
-    // ✅ 댓글 기능
-    function getComments() {
-      return JSON.parse(localStorage.getItem('comments') || '{}');
-    }
-
-    function addComment(link, text) {
-      const comments = getComments();
-      if (!comments[link]) comments[link] = [];
-      comments[link].unshift({
-        text: text,
-        timestamp: Date.now()
-      });
-      localStorage.setItem('comments', JSON.stringify(comments));
-      updateCommentsDisplay(link);
-    }
-
-    function updateCommentsDisplay(link) {
-      const commentsDisplay = document.getElementById(`comments-${link}`);
-      if (!commentsDisplay) return;
-      
-      const comments = getComments()[link] || [];
-      
-      if (comments.length === 0) {
-        commentsDisplay.innerHTML = '<div class="text-gray-500 text-sm">아직 댓글이 없습니다</div>';
-        return;
-      }
-      
-      commentsDisplay.innerHTML = '';
-      comments.slice(0, 3).forEach(comment => {
-        const commentEl = document.createElement('div');
-        commentEl.className = 'comment';
-        commentEl.innerHTML = `
-          <div class="text-sm">${comment.text}</div>
-          <div class="text-xs text-gray-400">${new Date(comment.timestamp).toLocaleString()}</div>
-        `;
-        commentsDisplay.appendChild(commentEl);
-      });
     }
 
     // 🔍 카테고리 필터
@@ -517,7 +360,7 @@
         .slice(0, 3);
       
       if (sorted.length === 0) {
-        popularNews.innerHTML = '<p class="text-gray-500">아직 인기 뉴스가 없습니다</p>';
+        popularNews.innerHTML = '<p class="text-center text-gray-500 py-8">아직 인기 뉴스가 없습니다</p>';
         return;
       }
       
@@ -526,12 +369,30 @@
         const news = allNewsData.find(n => n.link === link);
         if (news) {
           const itemEl = document.createElement('div');
-          itemEl.className = 'popular-item';
+          itemEl.className = 'news-card bg-white rounded-2xl shadow-md border border-slate-200';
           itemEl.innerHTML = `
-            <span class="popular-rank">${index + 1}</span>
-            <div class="flex-1">
-              <p class="font-medium text-sm line-clamp-1">${news.title}</p>
-              <p class="text-xs text-gray-500">${count}회 조회</p>
+            <div class="cursor-pointer" onclick="window.open('${news.link}', '_blank'); markAsRead('${news.link}', '${news.title}', '${news.image}', '${news.source}')">
+              ${isRead(news.link) ? '<div class="read-badge">본 기사</div>' : ''}
+              <div class="flex">
+                <div class="w-1/3">
+                  <img src="${news.image}" alt="${news.title}" class="popular-img" onerror="this.src='https://placehold.co/80x80/9ca3af/ffffff?text=N'">
+                </div>
+                <div class="w-2/3 p-4">
+                  <div class="flex items-center mb-2">
+                    <span class="popular-rank">${index + 1}</span>
+                    <span class="text-xs text-gray-500">${count}회 조회</span>
+                  </div>
+                  <h3 class="text-lg font-bold text-gray-800 mb-1 line-clamp-2">${news.title}</h3>
+                  <p class="text-gray-600 text-sm line-clamp-2">${news.summary}</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-4 pt-0">
+              <div class="share-actions">
+                <div class="share-btn" onclick="event.stopPropagation(); shareToKakao('${news.link}')">카카오톡</div>
+                <div class="share-btn" onclick="event.stopPropagation(); shareToTwitter('${news.link}')">트위터</div>
+                <div class="share-btn" onclick="event.stopPropagation(); copyLink('${news.link}')">복사</div>
+              </div>
             </div>
           `;
           popularNews.appendChild(itemEl);
@@ -606,7 +467,7 @@
       return '기타';
     }
 
-    // 🔗 뉴스 표시 함수 (수정됨)
+    // 🔗 뉴스 표시 함수
     function displayNews(newsArray) {
       const newsList = document.getElementById('newsList');
       newsList.innerHTML = '';
@@ -622,13 +483,7 @@
         const newsEl = document.createElement('div');
         newsEl.className = "news-card bg-white rounded-2xl shadow-md border border-slate-200";
         
-        // ✅ 본 기사 시각적 표시
-        if (read) {
-          newsEl.classList.add('read-card');
-        }
-        
         newsEl.innerHTML = `
-          <!-- ✅ 제목/이미지 클릭 시에만 기사 열림 -->
           <div class="cursor-pointer" onclick="window.open('${news.link}', '_blank'); markAsRead('${news.link}', '${news.title}', '${news.image}', '${news.source}')">
             ${read ? '<div class="read-badge">본 기사</div>' : ''}
             <div class="relative">
@@ -657,57 +512,23 @@
             </div>
           </div>
 
-          <!-- ✅ 버튼들은 기사 안 열리고 동작 -->
           <div class="p-5 pt-0">
             <div class="share-actions">
-              <div class="share-btn" onclick="shareToKakao('${news.link}')">카카오톡</div>
-              <div class="share-btn" onclick="shareToTwitter('${news.link}')">트위터</div>
-              <div class="share-btn" onclick="copyLink('${news.link}')">복사</div>
-            </div>
-
-            <!-- 커뮤니티 기능 -->
-            <div class="vote-section">
-              <div class="text-sm font-medium mb-2">이 뉴스 어떻게 보세요?</div>
-              <div class="flex gap-2">
-                <button class="vote-btn vote-buy" onclick="vote('${news.link}', '매수')">매수</button>
-                <button class="vote-btn vote-hold" onclick="vote('${news.link}', '관망')">관망</button>
-                <button class="vote-btn vote-sell" onclick="vote('${news.link}', '매도')">매도</button>
-              </div>
-              <div id="vote-display-${news.link}"></div>
-            </div>
-
-            <div class="comments-section">
-              <div class="text-sm font-medium mb-2">의견 남기기</div>
-              <div class="comment-input">
-                <textarea rows="2" placeholder="의견을 입력하세요..." id="comment-input-${news.link}"></textarea>
-                <button onclick="const input = document.getElementById('comment-input-${news.link}'); 
-                  if (input.value.trim()) {
-                    addComment('${news.link}', input.value.trim());
-                    input.value = '';
-                  }">등록</button>
-              </div>
-              <div id="comments-${news.link}"></div>
+              <div class="share-btn" onclick="event.stopPropagation(); shareToKakao('${news.link}')">카카오톡</div>
+              <div class="share-btn" onclick="event.stopPropagation(); shareToTwitter('${news.link}')">트위터</div>
+              <div class="share-btn" onclick="event.stopPropagation(); copyLink('${news.link}')">복사</div>
             </div>
           </div>
         `;
         
         newsList.appendChild(newsEl);
-        
-        // 초기 투표 및 댓글 표시
-        setTimeout(() => {
-          updateVoteDisplay(news.link);
-          updateCommentsDisplay(news.link);
-        }, 100);
       });
     }
 
     // 🚀 메인 로딩 함수
     async function loadNews() {
-      // 방문자 수 증가
-      incrementVisitor();
-
       const newsList = document.getElementById('newsList');
-      newsList.innerHTML = '<p class="text-center text-gray-500 py-8">📰 뉴스를 불러오는 중...</p>';
+      newsList.innerHTML = '<p class="text-center text-gray-500 py-8">뉴스를 불러오는 중...</p>';
 
       try {
         const response = await fetch(csvUrl);
@@ -749,17 +570,17 @@
         // 조회수 데이터 로드
         popularNewsCount = JSON.parse(localStorage.getItem('popularNewsCount') || '{}');
 
-        // 필터 적용 후 표시
-        displayNews(allNewsData);
+        // 인기 뉴스 먼저 표시
+        updatePopularNews();
         
         // 오늘 업데이트 알림
         updateTodayUpdate();
         
+        // 최신 뉴스 표시
+        displayNews(allNewsData);
+        
         // 최근 본 뉴스 표시
         updateRecentNews();
-        
-        // 인기 뉴스 표시
-        updatePopularNews();
 
         // 다크모드 상태 복원
         if (localStorage.getItem('darkMode') === 'true') {
@@ -768,7 +589,7 @@
 
       } catch (error) {
         console.error('오류:', error);
-        newsList.innerHTML = `
+        document.getElementById('newsList').innerHTML = `
           <div class="text-center p-8 bg-red-50 rounded-2xl">
             <p class="text-red-600 font-medium">로딩 실패</p>
             <button onclick="location.reload()" class="mt-3 bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
