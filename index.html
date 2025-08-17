@@ -26,7 +26,6 @@
 </head>
 <body class="min-h-screen">
     <div class="max-w-7xl mx-auto px-4 py-8">
-
         <header class="text-center mb-8">
             <div class="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <span class="text-white font-bold text-3xl">📈</span>
@@ -72,33 +71,48 @@
         const loadMoreBtn = document.getElementById('loadMoreBtn');
         const skeletonLoader = document.getElementById('skeletonLoader');
 
-        // ✨ [핵심 개선] 화면에 보이는 카드만 이미지를 요청하고 업데이트하는 IntersectionObserver
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
+        // ✨ [핵심 개선] 제목과 이미지를 한 번에 가져오는 함수
+        async function fetchArticleMetadata(url) {
+            try {
+                const response = await fetch(`${CONFIG.corsProxy}${encodeURIComponent(url)}`);
+                if (!response.ok) return { title: null, image: null };
+                const data = await response.json();
+                const html = data.contents;
+                
+                // 제목 추출 (og:title 우선, 없으면 <title> 태그)
+                const titleMatch = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
+                const title = titleMatch ? titleMatch[1].trim() : null;
+
+                // 이미지 추출
+                const imageMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
+                const image = imageMatch ? imageMatch[1] : null;
+
+                return { title, image };
+            } catch (error) { 
+                return { title: null, image: null };
+            }
+        }
+
+        const metadataObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(async (entry) => { // async 추가
                 if (entry.isIntersecting) {
                     const card = entry.target;
                     const link = card.dataset.link;
-                    loadAndSetImage(card, link);
-                    observer.unobserve(card); // 한번 로드하면 더 이상 관찰 안함
+                    observer.unobserve(card); // 한번만 실행하도록 즉시 관찰 중지
+
+                    // ✨ 제목과 이미지를 한번에 요청
+                    const metadata = await fetchArticleMetadata(link);
+                    
+                    if (metadata.image) {
+                        card.querySelector('img').src = metadata.image;
+                    }
+                    if (metadata.title) {
+                        card.querySelector('.news-title').textContent = metadata.title;
+                    }
                 }
             });
-        }, { rootMargin: '0px 0px 200px 0px' }); // 화면에 보이기 200px 전에 로드 시작
+        }, { rootMargin: '0px 0px 200px 0px' });
 
-        async function loadAndSetImage(cardElement, url) {
-            try {
-                const response = await fetch(`${CONFIG.corsProxy}${encodeURIComponent(url)}`);
-                if (!response.ok) return;
-                const data = await response.json();
-                const html = data.contents;
-                const match = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/);
-                if (match && match[1]) {
-                    const imgElement = cardElement.querySelector('img');
-                    imgElement.src = match[1];
-                }
-            } catch (error) { /* 에러 시 조용히 무시하고 기본 로고 이미지를 유지 */ }
-        }
-
-        // ✨ [개선] 로고를 기본 이미지로 사용하고, 실제 썸네일 로딩 실패 시 에러 처리
         const createNewsCardHTML = (news) => {
             const sourceHost = new URL(news.link).hostname;
             const logoUrl = `https://logo.clearbit.com/${sourceHost}`;
@@ -110,7 +124,7 @@
                         <img src="${logoUrl}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/94a3b8?text=Image';" alt="${news.title}" class="w-full h-48 object-cover rounded-t-2xl bg-gray-100">
                     </div>
                     <div class="p-4 flex flex-col flex-grow">
-                        <h3 class="text-lg font-bold mb-2 line-clamp-2">${news.title}</h3>
+                        <h3 class="news-title text-lg font-bold mb-2 line-clamp-2">${news.title}</h3>
                         <p class="text-sm mb-3 line-clamp-3 text-gray-600 dark:text-gray-400">${news.summary}</p>
                         <div class="flex-grow"></div>
                         <div class="flex items-center justify-between text-xs mt-2 text-gray-500 dark:text-gray-400">
@@ -131,9 +145,8 @@
             }
             container.insertAdjacentHTML('beforeend', newsItems.map(createNewsCardHTML).join(''));
             
-            // ✨ 새로 추가된 카드들에 대해 이미지 로딩 관찰 시작
             const newCards = Array.from(container.children).slice(displayedItems);
-            newCards.forEach(card => imageObserver.observe(card));
+            newCards.forEach(card => metadataObserver.observe(card)); // ✨ 메타데이터 관찰자 사용
         }
 
         function updateUI() {
@@ -164,7 +177,6 @@
             }
         }
 
-        // ✨ [핵심 개선] 데이터 로딩 함수에서 이미지 페치 로직 제거
         async function loadData() {
             try {
                 const response = await fetch(CONFIG.csvUrl);
@@ -177,6 +189,7 @@
                     const link = cols[1];
                     return {
                         link: link,
+                        // ✨ 시트 A열이 비어있으면 주소를 임시 제목으로 사용
                         title: cols[0] || new URL(link).hostname,
                         summary: cols[2] || '요약 정보가 없습니다.',
                         date: cols[4] || new Date().toISOString().split('T')[0],
