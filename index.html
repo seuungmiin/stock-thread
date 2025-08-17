@@ -36,12 +36,13 @@
       position: absolute;
       top: 12px;
       left: 12px;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.7);
       color: white;
       font-size: 11px;
-      padding: 2px 6px;
+      padding: 4px 8px;
       border-radius: 4px;
       z-index: 10;
+      font-weight: bold;
     }
     .category-filter {
       display: flex;
@@ -133,61 +134,7 @@
     // 🔍 현재 필터
     let currentFilter = 'all';
 
-    // 🔍 링크에서 제목 추출
-    function extractTitleFromLink(link) {
-      const titles = {
-        'hankyung.com': '한국경제 뉴스',
-        'chosun.com': '조선비즈 뉴스',
-        'naver.com': '네이버 경제 뉴스',
-        'daum.net': '다음 증권 뉴스',
-        'etnews.com': '전자신문 기사',
-        'mk.co.kr': '머니투데이 뉴스',
-        'yonhapnews.co.kr': '연합뉴스 경제'
-      };
-      
-      for (const [key, value] of Object.entries(titles)) {
-        if (link.includes(key)) return value;
-      }
-      
-      try {
-        const url = new URL(link);
-        const domain = url.hostname.replace('www.', '');
-        return `${domain.replace('.com', '').replace('.co.kr', '')} 최신 뉴스`;
-      } catch {
-        return '기사 제목';
-      }
-    }
-
-    // 🖼️ 출처별 이미지
-    function getImageForLink(link) {
-      if (link.includes('hankyung.com')) return 'https://placehold.co/600x300/1f2937/ffffff?text=한국경제';
-      if (link.includes('chosun.com')) return 'https://placehold.co/600x300/dc2626/ffffff?text=조선비즈';
-      if (link.includes('naver.com')) return 'https://placehold.co/600x300/25b64c/ffffff?text=네이버';
-      if (link.includes('daum.net')) return 'https://placehold.co/600x300/000000/ffffff?text=다음';
-      if (link.includes('etnews.com')) return 'https://placehold.co/600x300/059669/ffffff?text=전자신문';
-      if (link.includes('mk.co.kr')) return 'https://placehold.co/600x300/ea580c/ffffff?text=머니투데이';
-      if (link.includes('yonhapnews.co.kr')) return 'https://placehold.co/600x300/7c3aed/ffffff?text=연합뉴스';
-      return 'https://placehold.co/600x300/9ca3af/ffffff?text=주식뉴스';
-    }
-
-    // 🏷️ 출처 추출
-    function getSource(link) {
-      const sources = {
-        'hankyung.com': '한국경제',
-        'chosun.com': '조선비즈',
-        'naver.com': '네이버',
-        'daum.net': '다음',
-        'etnews.com': '전자신문',
-        'mk.co.kr': '머니투데이',
-        'yonhapnews.co.kr': '연합뉴스'
-      };
-      for (const [key, value] of Object.entries(sources)) {
-        if (link.includes(key)) return value;
-      }
-      return '기타';
-    }
-
-    // ✅ 읽음 상태 관리
+    // ✅ 본 기사 목록 관리
     function getReadNews() {
       return JSON.parse(localStorage.getItem('readNews') || '[]');
     }
@@ -221,7 +168,7 @@
       });
     }
 
-    // 📱 카카오톡 공유 (모바일)
+    // 📱 카카오톡 공유
     function shareToKakao(link) {
       const url = `https://story.kakao.com/share?url=${encodeURIComponent(link)}`;
       window.open(url, '_blank');
@@ -291,7 +238,7 @@
           
           newsEl.innerHTML = `
             <a href="${link}" target="_blank" class="block" onclick="markAsRead('${link}')">
-              ${read ? '<div class="read-badge">읽음</div>' : ''}
+              ${read ? '<div class="read-badge">본 기사</div>' : ''}
               <div class="relative">
                 <img src="${image}" alt="${displayedTitle}" class="w-full h-48 object-cover" onerror="this.src='https://placehold.co/600x300/9ca3af/ffffff?text=No+Image'">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -338,6 +285,60 @@
           </div>
         `;
       }
+    }
+
+    // 🔍 링크에서 제목 추출
+    function extractTitleFromLink(link) {
+      const titles = {
+        'hankyung.com': '한국경제 뉴스',
+        'chosun.com': '조선비즈 뉴스',
+        'naver.com': '네이버 경제 뉴스',
+        'daum.net': '다음 증권 뉴스',
+        'etnews.com': '전자신문 기사',
+        'mk.co.kr': '머니투데이 뉴스',
+        'yonhapnews.co.kr': '연합뉴스 경제'
+      };
+      
+      for (const [key, value] of Object.entries(titles)) {
+        if (link.includes(key)) return value;
+      }
+      
+      try {
+        const url = new URL(link);
+        const domain = url.hostname.replace('www.', '');
+        return `${domain.replace('.com', '').replace('.co.kr', '')} 최신 뉴스`;
+      } catch {
+        return '기사 제목';
+      }
+    }
+
+    // 🖼️ 출처별 이미지
+    function getImageForLink(link) {
+      if (link.includes('hankyung.com')) return 'https://placehold.co/600x300/1f2937/ffffff?text=한국경제';
+      if (link.includes('chosun.com')) return 'https://placehold.co/600x300/dc2626/ffffff?text=조선비즈';
+      if (link.includes('naver.com')) return 'https://placehold.co/600x300/25b64c/ffffff?text=네이버';
+      if (link.includes('daum.net')) return 'https://placehold.co/600x300/000000/ffffff?text=다음';
+      if (link.includes('etnews.com')) return 'https://placehold.co/600x300/059669/ffffff?text=전자신문';
+      if (link.includes('mk.co.kr')) return 'https://placehold.co/600x300/ea580c/ffffff?text=머니투데이';
+      if (link.includes('yonhapnews.co.kr')) return 'https://placehold.co/600x300/7c3aed/ffffff?text=연합뉴스';
+      return 'https://placehold.co/600x300/9ca3af/ffffff?text=주식뉴스';
+    }
+
+    // 🏷️ 출처 추출
+    function getSource(link) {
+      const sources = {
+        'hankyung.com': '한국경제',
+        'chosun.com': '조선비즈',
+        'naver.com': '네이버',
+        'daum.net': '다음',
+        'etnews.com': '전자신문',
+        'mk.co.kr': '머니투데이',
+        'yonhapnews.co.kr': '연합뉴스'
+      };
+      for (const [key, value] of Object.entries(sources)) {
+        if (link.includes(key)) return value;
+      }
+      return '기타';
     }
 
     window.onload = loadNews;
