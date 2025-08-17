@@ -151,13 +151,18 @@
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       z-index: 100;
     }
-    .section-title {
-      font-size: 1.25rem;
+    .date-divider {
+      font-size: 1.125rem;
       font-weight: bold;
-      margin: 24px 0 16px 0;
-      padding-bottom: 8px;
-      border-bottom: 2px solid var(--accent);
-      color: var(--text-primary);
+      margin: 24px 0 12px 0;
+      padding: 8px 16px;
+      background: var(--accent);
+      color: white;
+      border-radius: 8px;
+      display: inline-block;
+    }
+    .news-group {
+      margin-bottom: 24px;
     }
     @media (max-width: 640px) {
       .news-card { margin: 0 4px; }
@@ -204,13 +209,13 @@
       <!-- 오늘 업데이트 내용 표시 -->
     </div>
 
-    <!-- News List -->
+    <!-- News List (날짜별 그룹화) -->
     <div id="newsList" class="space-y-6">
       <p class="text-center text-gray-500 py-8">뉴스를 불러오는 중...</p>
     </div>
 
     <!-- Popular News (하단에 표시) -->
-    <h2 class="section-title">🔥 오늘의 인기 뉴스</h2>
+    <h2 class="text-2xl font-bold mt-12 mb-4 text-gray-800">🔥 오늘의 인기 뉴스</h2>
     <div id="popularNews" class="space-y-4">
       <p class="text-center text-gray-500 py-8">인기 뉴스를 불러오는 중...</p>
     </div>
@@ -470,7 +475,7 @@
       return '기타';
     }
 
-    // 🔗 뉴스 표시 함수
+    // 🔗 뉴스 표시 함수 (날짜별 그룹화)
     function displayNews(newsArray) {
       const newsList = document.getElementById('newsList');
       newsList.innerHTML = '';
@@ -480,50 +485,82 @@
         return;
       }
 
+      // 날짜별 그룹화
+      const groupedByDate = {};
       newsArray.forEach(news => {
-        const read = isRead(news.link);
-        const newsEl = document.createElement('div');
-        newsEl.className = "news-card bg-white rounded-2xl shadow-md border border-slate-200";
+        if (!groupedByDate[news.date]) {
+          groupedByDate[news.date] = [];
+        }
+        groupedByDate[news.date].push(news);
+      });
+
+      // 날짜별로 표시
+      Object.keys(groupedByDate).forEach(date => {
+        const dateGroup = document.createElement('div');
+        dateGroup.className = 'news-group';
         
-        newsEl.innerHTML = `
-          <div class="cursor-pointer" onclick="window.open('${news.link}', '_blank'); markAsRead('${news.link}', '${news.title}', '${news.image}', '${news.source}')">
-            ${read ? '<div class="read-badge">본 기사</div>' : ''}
-            <div class="relative">
-              <img src="${news.image}" alt="${news.title}" class="w-full h-48 object-cover" onerror="this.src='https://placehold.co/600x300/9ca3af/ffffff?text=No+Image'">
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-              <div class="absolute bottom-4 left-4 right-4">
-                <h3 class="text-xl font-bold text-white mb-1 line-clamp-2">${news.title}</h3>
-                <div class="flex items-center justify-between text-xs text-white/90">
-                  <span>${news.source}</span>
-                  <span>${news.date}</span>
+        // 날짜 제목
+        const dateTitle = document.createElement('div');
+        dateTitle.className = 'date-divider';
+        dateTitle.textContent = formatDate(date);
+        dateGroup.appendChild(dateTitle);
+
+        // 각 뉴스 카드 추가
+        groupedByDate[date].forEach(news => {
+          const read = isRead(news.link);
+          const newsEl = document.createElement('div');
+          newsEl.className = "news-card bg-white rounded-2xl shadow-md border border-slate-200";
+          
+          newsEl.innerHTML = `
+            <div class="cursor-pointer" onclick="window.open('${news.link}', '_blank'); markAsRead('${news.link}', '${news.title}', '${news.image}', '${news.source}')">
+              ${read ? '<div class="read-badge">본 기사</div>' : ''}
+              <div class="relative">
+                <img src="${news.image}" alt="${news.title}" class="w-full h-48 object-cover" onerror="this.src='https://placehold.co/600x300/9ca3af/ffffff?text=No+Image'">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div class="absolute bottom-4 left-4 right-4">
+                  <h3 class="text-xl font-bold text-white mb-1 line-clamp-2">${news.title}</h3>
+                  <div class="flex items-center justify-between text-xs text-white/90">
+                    <span>${news.source}</span>
+                    <span>${news.date}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="p-5">
+                <p class="text-gray-600 text-sm mb-3 line-clamp-2">${news.summary}</p>
+                <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+                  <span class="bg-gray-100 px-2 py-1 rounded">${news.category}</span>
+                  <span class="text-blue-600 font-medium flex items-center">
+                    자세히 보기 
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-1">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <polyline points="19 12 12 19 5 12"></polyline>
+                    </svg>
+                  </span>
                 </div>
               </div>
             </div>
-            <div class="p-5">
-              <p class="text-gray-600 text-sm mb-3 line-clamp-2">${news.summary}</p>
-              <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
-                <span class="bg-gray-100 px-2 py-1 rounded">${news.category}</span>
-                <span class="text-blue-600 font-medium flex items-center">
-                  자세히 보기 
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-1">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <polyline points="19 12 12 19 5 12"></polyline>
-                  </svg>
-                </span>
+            <div class="p-5 pt-0">
+              <div class="share-actions">
+                <div class="share-btn" onclick="event.stopPropagation(); shareToKakao('${news.link}')">카카오톡</div>
+                <div class="share-btn" onclick="event.stopPropagation(); shareToTwitter('${news.link}')">트위터</div>
+                <div class="share-btn" onclick="event.stopPropagation(); copyLink('${news.link}')">복사</div>
               </div>
             </div>
-          </div>
-          <div class="p-5 pt-0">
-            <div class="share-actions">
-              <div class="share-btn" onclick="event.stopPropagation(); shareToKakao('${news.link}')">카카오톡</div>
-              <div class="share-btn" onclick="event.stopPropagation(); shareToTwitter('${news.link}')">트위터</div>
-              <div class="share-btn" onclick="event.stopPropagation(); copyLink('${news.link}')">복사</div>
-            </div>
-          </div>
-        `;
+          `;
+          
+          dateGroup.appendChild(newsEl);
+        });
         
-        newsList.appendChild(newsEl);
+        newsList.appendChild(dateGroup);
       });
+    }
+
+    // 📅 날짜 형식 변환 (2024-08-18 → 8월 18일)
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${month}월 ${day}일`;
     }
 
     // 🚀 메인 로딩 함수
@@ -574,7 +611,7 @@
         // 오늘 업데이트 알림
         updateTodayUpdate();
         
-        // 최신 뉴스 표시
+        // 최신 뉴스 날짜별 표시
         displayNews(allNewsData);
         
         // 인기 뉴스 하단에 표시
