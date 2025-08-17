@@ -7,14 +7,36 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #f1f5f9;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --card-bg: white;
+      --border-color: #e2e8f0;
+      --accent: #3b82f6;
+    }
+    .dark-mode {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --card-bg: #1e293b;
+      --border-color: #334155;
+      --accent: #60a5fa;
+    }
     body { 
       font-family: 'Noto Sans KR', sans-serif; 
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background 0.3s ease;
     }
     .news-card { 
       transition: all 0.3s ease; 
       position: relative;
       overflow: hidden;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
     }
     .news-card:hover { 
       transform: translateY(-6px); 
@@ -50,7 +72,7 @@
       gap: 8px;
       margin: 16px 0;
       padding: 8px;
-      background: white;
+      background: var(--card-bg);
       border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
@@ -63,19 +85,19 @@
       transition: all 0.2s;
     }
     .filter-btn.active {
-      background: #3b82f6;
+      background: var(--accent);
       color: white;
     }
     .filter-btn:not(.active) {
-      background: #f1f5f9;
-      color: #64748b;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
     }
     .share-actions {
       display: flex;
       gap: 8px;
       margin-top: 8px;
       padding-top: 8px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid var(--border-color);
       font-size: 14px;
     }
     .share-btn {
@@ -83,15 +105,60 @@
       text-align: center;
       padding: 6px 0;
       border-radius: 8px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
       cursor: pointer;
       transition: all 0.2s;
     }
     .share-btn:hover {
-      background: #eff6ff;
-      border-color: #3b82f6;
-      color: #3b82f6;
+      background: #1e40af;
+      border-color: #1e40af;
+      color: white;
+    }
+    .recent-news, .stats-panel, .popular-news {
+      margin: 24px 0;
+      padding: 16px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .stat-item:last-child {
+      border-bottom: none;
+    }
+    .dark-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 100;
+    }
+    .popular-item {
+      display: flex;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .popular-item:last-child {
+      border-bottom: none;
+    }
+    .popular-rank {
+      font-weight: bold;
+      color: var(--accent);
+      min-width: 20px;
     }
     @media (max-width: 640px) {
       .news-card { margin: 0 4px; }
@@ -110,6 +177,43 @@
       <p class="text-lg text-gray-600">매일 엄선된 투자 정보를 공유합니다</p>
     </header>
 
+    <!-- Dark Mode Toggle -->
+    <button class="dark-toggle" onclick="toggleDarkMode()">🌙</button>
+
+    <!-- Stats Panel -->
+    <div class="stats-panel">
+      <h3 class="text-lg font-bold mb-3">📊 오늘의 통계</h3>
+      <div class="space-y-2">
+        <div class="stat-item">
+          <span>오늘 방문자</span>
+          <span id="todayVisitors" class="font-bold">0</span>
+        </div>
+        <div class="stat-item">
+          <span>총 방문자</span>
+          <span id="totalVisitors" class="font-bold">0</span>
+        </div>
+        <div class="stat-item">
+          <span>오늘 본 기사</span>
+          <span id="todayViews">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Update -->
+    <div id="todayUpdate" class="text-center mb-4 text-sm text-gray-500">
+      <!-- 오늘 업데이트 내용 표시 -->
+    </div>
+
+    <!-- Search Bar -->
+    <div class="mb-6">
+      <input 
+        type="text" 
+        placeholder="뉴스 검색..." 
+        oninput="searchNews(this.value)"
+        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+      />
+    </div>
+
     <!-- Category Filter -->
     <div class="category-filter">
       <button class="filter-btn active" onclick="filterNews('all')">전체</button>
@@ -125,6 +229,18 @@
       <p class="text-center text-gray-500 py-8">📰 뉴스를 불러오는 중...</p>
     </div>
 
+    <!-- Popular News -->
+    <div id="popularNewsSection" class="popular-news">
+      <h3 class="text-lg font-bold mb-3">🔥 오늘의 인기 뉴스</h3>
+      <div id="popularNews"></div>
+    </div>
+
+    <!-- Recent News -->
+    <div id="recentNewsSection" class="recent-news">
+      <h3 class="text-lg font-bold mb-3">최근 본 뉴스</h3>
+      <div id="recentNews"></div>
+    </div>
+
   </div>
 
   <script>
@@ -133,22 +249,68 @@
 
     // 🔍 현재 필터
     let currentFilter = 'all';
+    let allNewsData = [];
+    let popularNewsCount = {};
+
+    // ✅ 방문자 통계 관리
+    function getVisitorStats() {
+      const today = new Date().toDateString();
+      let stats = JSON.parse(localStorage.getItem('visitorStats') || '{}');
+      
+      // 오늘 데이터 없으면 초기화
+      if (stats.lastVisit !== today) {
+        stats.todayCount = 0;
+        stats.lastVisit = today;
+        localStorage.setItem('visitorStats', JSON.stringify(stats));
+      }
+      
+      return stats;
+    }
+
+    function incrementVisitor() {
+      let stats = getVisitorStats();
+      stats.todayCount = (stats.todayCount || 0) + 1;
+      stats.totalCount = (stats.totalCount || 0) + 1;
+      localStorage.setItem('visitorStats', JSON.stringify(stats));
+      updateStatsDisplay();
+    }
+
+    function updateStatsDisplay() {
+      const stats = getVisitorStats();
+      document.getElementById('todayVisitors').textContent = stats.todayCount || 0;
+      document.getElementById('totalVisitors').textContent = stats.totalCount || 0;
+    }
 
     // ✅ 본 기사 목록 관리
     function getReadNews() {
       return JSON.parse(localStorage.getItem('readNews') || '[]');
     }
 
-    function markAsRead(link) {
+    function markAsRead(link, title, image, source) {
       const readNews = getReadNews();
-      if (!readNews.includes(link)) {
-        readNews.push(link);
-        localStorage.setItem('readNews', JSON.stringify(readNews));
+      const existingIndex = readNews.findIndex(item => item.link === link);
+      
+      if (existingIndex > -1) {
+        readNews.splice(existingIndex, 1);
       }
+      
+      readNews.unshift({ link, title, image, source, timestamp: Date.now() });
+      
+      if (readNews.length > 3) {
+        readNews.length = 3;
+      }
+      
+      localStorage.setItem('readNews', JSON.stringify(readNews));
+      updateRecentNews();
+      
+      // 조회수 증가
+      popularNewsCount[link] = (popularNewsCount[link] || 0) + 1;
+      localStorage.setItem('popularNewsCount', JSON.stringify(popularNewsCount));
+      updatePopularNews();
     }
 
     function isRead(link) {
-      return getReadNews().includes(link);
+      return getReadNews().some(item => item.link === link);
     }
 
     // 🔍 카테고리 필터
@@ -158,7 +320,23 @@
         btn.classList.remove('active');
       });
       event.target.classList.add('active');
-      loadNews();
+      displayNews(allNewsData);
+    }
+
+    // 🔍 검색 기능
+    function searchNews(keyword) {
+      if (!keyword.trim()) {
+        displayNews(allNewsData);
+        return;
+      }
+      
+      const filtered = allNewsData.filter(news => {
+        return news.title.toLowerCase().includes(keyword.toLowerCase()) ||
+               news.summary.toLowerCase().includes(keyword.toLowerCase()) ||
+               news.source.toLowerCase().includes(keyword.toLowerCase());
+      });
+      
+      displayNews(filtered);
     }
 
     // 🔗 링크 복사
@@ -181,110 +359,94 @@
       window.open(url, '_blank');
     }
 
-    async function loadNews() {
-      const newsList = document.getElementById('newsList');
-      newsList.innerHTML = '<p class="text-center text-gray-500 py-8">📰 뉴스를 불러오는 중...</p>';
+    // 🌙 다크모드 토글
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('darkMode', isDark);
+    }
 
-      try {
-        const response = await fetch(csvUrl);
-        const csv = await response.text();
-        
-        const lines = csv.split('\n').filter(line => line.trim() !== '');
-        if (lines.length < 2) {
-          newsList.innerHTML = '<p class="text-center text-gray-500 py-8">뉴스가 없습니다.</p>';
-          return;
-        }
-
-        // 데이터 추출 및 역순 정렬 (최신이 위로)
-        const rows = lines.slice(1)
-          .filter(row => row.split(',')[1]?.includes('http'))
-          .reverse();
-        
-        // 카테고리 필터 적용
-        const filteredRows = currentFilter === 'all' 
-          ? rows 
-          : rows.filter(row => {
-              const cols = row.split(',');
-              const category = cols[6]?.trim();
-              return category === currentFilter;
-            });
-
-        newsList.innerHTML = '';
-
-        if (filteredRows.length === 0) {
-          newsList.innerHTML = '<p class="text-center text-gray-500 py-8">해당 카테고리에 뉴스가 없습니다.</p>';
-          return;
-        }
-
-        filteredRows.forEach(row => {
-          const cols = row.split(',').map(col => 
-            col.trim().replace(/^"(.*)"$/, '$1')
-          );
-
-          const rawTitle = cols[1] || '#';
-          const link = rawTitle.startsWith('http') ? rawTitle : '#';
-          const summary = cols[2] || '이 뉴스의 요약입니다.';
-          const date = cols[4] || new Date().toISOString().split('T')[0];
-          const category = cols[6] || '기타';
-
-          // 웹에서만 제목 가공
-          const displayedTitle = extractTitleFromLink(link);
-          const source = getSource(link);
-          const image = getImageForLink(link);
-          const read = isRead(link);
-
-          const newsEl = document.createElement('div');
-          newsEl.className = "news-card bg-white rounded-2xl shadow-md border border-slate-200";
-          
-          newsEl.innerHTML = `
-            <a href="${link}" target="_blank" class="block" onclick="markAsRead('${link}')">
-              ${read ? '<div class="read-badge">본 기사</div>' : ''}
-              <div class="relative">
-                <img src="${image}" alt="${displayedTitle}" class="w-full h-48 object-cover" onerror="this.src='https://placehold.co/600x300/9ca3af/ffffff?text=No+Image'">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div class="absolute bottom-4 left-4 right-4">
-                  <h3 class="text-xl font-bold text-white mb-1 line-clamp-2">${displayedTitle}</h3>
-                  <div class="flex items-center justify-between text-xs text-white/90">
-                    <span>${source}</span>
-                    <span>${date}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="p-5">
-                <p class="text-gray-600 text-sm mb-3 line-clamp-2">${summary}</p>
-                <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
-                  <span class="bg-gray-100 px-2 py-1 rounded">${category}</span>
-                  <span class="text-blue-600 font-medium flex items-center">
-                    자세히 보기 
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-1">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <polyline points="19 12 12 19 5 12"></polyline>
-                    </svg>
-                  </span>
-                </div>
-                <div class="share-actions">
-                  <div class="share-btn" onclick="event.stopPropagation(); shareToKakao('${link}')">카카오톡</div>
-                  <div class="share-btn" onclick="event.stopPropagation(); shareToTwitter('${link}')">트위터</div>
-                  <div class="share-btn" onclick="event.stopPropagation(); copyLink('${link}')">복사</div>
-                </div>
-              </div>
-            </a>
-          `;
-          
-          newsList.appendChild(newsEl);
-        });
-
-      } catch (error) {
-        console.error('오류:', error);
-        newsList.innerHTML = `
-          <div class="text-center p-8 bg-red-50 rounded-2xl">
-            <p class="text-red-600 font-medium">로딩 실패</p>
-            <button onclick="location.reload()" class="mt-3 bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
-              다시 시도
-            </button>
+    // 🔄 최근 본 뉴스 업데이트
+    function updateRecentNews() {
+      const recentNews = document.getElementById('recentNews');
+      const readNews = getReadNews();
+      
+      if (readNews.length === 0) {
+        recentNews.innerHTML = '<p class="text-gray-500">아직 본 뉴스가 없습니다</p>';
+        return;
+      }
+      
+      recentNews.innerHTML = '';
+      readNews.forEach(item => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'recent-item';
+        itemEl.innerHTML = `
+          <img src="${item.image}" alt="${item.title}" class="recent-img" onerror="this.src='https://placehold.co/60x60/9ca3af/ffffff?text=N'">
+          <div class="flex-1">
+            <p class="font-medium text-sm line-clamp-1">${item.title}</p>
+            <p class="text-xs text-gray-500">${item.source}</p>
           </div>
         `;
+        recentNews.appendChild(itemEl);
+      });
+    }
+
+    // 🔥 인기 뉴스 업데이트
+    function updatePopularNews() {
+      const popularNews = document.getElementById('popularNews');
+      const countData = JSON.parse(localStorage.getItem('popularNewsCount') || '{}');
+      
+      // 조회수 기준 정렬
+      const sorted = Object.entries(countData)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3);
+      
+      if (sorted.length === 0) {
+        popularNews.innerHTML = '<p class="text-gray-500">아직 인기 뉴스가 없습니다</p>';
+        return;
       }
+      
+      popularNews.innerHTML = '';
+      sorted.forEach(([link, count], index) => {
+        const news = allNewsData.find(n => n.link === link);
+        if (news) {
+          const itemEl = document.createElement('div');
+          itemEl.className = 'popular-item';
+          itemEl.innerHTML = `
+            <span class="popular-rank">${index + 1}</span>
+            <div class="flex-1">
+              <p class="font-medium text-sm line-clamp-1">${news.title}</p>
+              <p class="text-xs text-gray-500">${count}회 조회</p>
+            </div>
+          `;
+          popularNews.appendChild(itemEl);
+        }
+      });
+    }
+
+    // 📅 오늘 업데이트 알림
+    function updateTodayUpdate() {
+      const today = new Date().toISOString().split('T')[0];
+      const todayNews = allNewsData.filter(news => news.date === today);
+      
+      const updateEl = document.getElementById('todayUpdate');
+      if (todayNews.length > 0) {
+        updateEl.innerHTML = `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">오늘 ${todayNews.length}개 뉴스 업데이트</span>`;
+      } else {
+        updateEl.innerHTML = '<span class="text-gray-400">오늘은 새로운 뉴스가 없습니다</span>';
+      }
+    }
+
+    // 🖼️ 출처별 이미지
+    function getImageForLink(link) {
+      if (link.includes('hankyung.com')) return 'https://placehold.co/600x300/1f2937/ffffff?text=한국경제';
+      if (link.includes('chosun.com')) return 'https://placehold.co/600x300/dc2626/ffffff?text=조선비즈';
+      if (link.includes('naver.com')) return 'https://placehold.co/600x300/25b64c/ffffff?text=네이버';
+      if (link.includes('daum.net')) return 'https://placehold.co/600x300/000000/ffffff?text=다음';
+      if (link.includes('etnews.com')) return 'https://placehold.co/600x300/059669/ffffff?text=전자신문';
+      if (link.includes('mk.co.kr')) return 'https://placehold.co/600x300/ea580c/ffffff?text=머니투데이';
+      if (link.includes('yonhapnews.co.kr')) return 'https://placehold.co/600x300/7c3aed/ffffff?text=연합뉴스';
+      return 'https://placehold.co/600x300/9ca3af/ffffff?text=주식뉴스';
     }
 
     // 🔍 링크에서 제목 추출
@@ -312,18 +474,6 @@
       }
     }
 
-    // 🖼️ 출처별 이미지
-    function getImageForLink(link) {
-      if (link.includes('hankyung.com')) return 'https://placehold.co/600x300/1f2937/ffffff?text=한국경제';
-      if (link.includes('chosun.com')) return 'https://placehold.co/600x300/dc2626/ffffff?text=조선비즈';
-      if (link.includes('naver.com')) return 'https://placehold.co/600x300/25b64c/ffffff?text=네이버';
-      if (link.includes('daum.net')) return 'https://placehold.co/600x300/000000/ffffff?text=다음';
-      if (link.includes('etnews.com')) return 'https://placehold.co/600x300/059669/ffffff?text=전자신문';
-      if (link.includes('mk.co.kr')) return 'https://placehold.co/600x300/ea580c/ffffff?text=머니투데이';
-      if (link.includes('yonhapnews.co.kr')) return 'https://placehold.co/600x300/7c3aed/ffffff?text=연합뉴스';
-      return 'https://placehold.co/600x300/9ca3af/ffffff?text=주식뉴스';
-    }
-
     // 🏷️ 출처 추출
     function getSource(link) {
       const sources = {
@@ -339,6 +489,138 @@
         if (link.includes(key)) return value;
       }
       return '기타';
+    }
+
+    // 🔗 뉴스 표시 함수
+    function displayNews(newsArray) {
+      const newsList = document.getElementById('newsList');
+      newsList.innerHTML = '';
+
+      if (newsArray.length === 0) {
+        newsList.innerHTML = '<p class="text-center text-gray-500 py-8">검색 결과가 없습니다.</p>';
+        return;
+      }
+
+      newsArray.forEach(news => {
+        const read = isRead(news.link);
+        const newsEl = document.createElement('div');
+        newsEl.className = "news-card bg-white rounded-2xl shadow-md border border-slate-200";
+        
+        newsEl.innerHTML = `
+          <a href="${news.link}" target="_blank" class="block" onclick="markAsRead('${news.link}', '${news.title}', '${news.image}', '${news.source}')">
+            ${read ? '<div class="read-badge">본 기사</div>' : ''}
+            <div class="relative">
+              <img src="${news.image}" alt="${news.title}" class="w-full h-48 object-cover" onerror="this.src='https://placehold.co/600x300/9ca3af/ffffff?text=No+Image'">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              <div class="absolute bottom-4 left-4 right-4">
+                <h3 class="text-xl font-bold text-white mb-1 line-clamp-2">${news.title}</h3>
+                <div class="flex items-center justify-between text-xs text-white/90">
+                  <span>${news.source}</span>
+                  <span>${news.date}</span>
+                </div>
+              </div>
+            </div>
+            <div class="p-5">
+              <p class="text-gray-600 text-sm mb-3 line-clamp-2">${news.summary}</p>
+              <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+                <span class="bg-gray-100 px-2 py-1 rounded">${news.category}</span>
+                <span class="text-blue-600 font-medium flex items-center">
+                  자세히 보기 
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-1">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                  </svg>
+                </span>
+              </div>
+              <div class="share-actions">
+                <div class="share-btn" onclick="event.stopPropagation(); shareToKakao('${news.link}')">카카오톡</div>
+                <div class="share-btn" onclick="event.stopPropagation(); shareToTwitter('${news.link}')">트위터</div>
+                <div class="share-btn" onclick="event.stopPropagation(); copyLink('${news.link}')">복사</div>
+              </div>
+            </div>
+          </a>
+        `;
+        
+        newsList.appendChild(newsEl);
+      });
+    }
+
+    // 🚀 메인 로딩 함수
+    async function loadNews() {
+      // 방문자 수 증가
+      incrementVisitor();
+
+      const newsList = document.getElementById('newsList');
+      newsList.innerHTML = '<p class="text-center text-gray-500 py-8">📰 뉴스를 불러오는 중...</p>';
+
+      try {
+        const response = await fetch(csvUrl);
+        const csv = await response.text();
+        
+        const lines = csv.split('\n').filter(line => line.trim() !== '');
+        if (lines.length < 2) {
+          newsList.innerHTML = '<p class="text-center text-gray-500 py-8">뉴스가 없습니다.</p>';
+          return;
+        }
+
+        // 데이터 처리
+        const rows = lines.slice(1)
+          .filter(row => row.split(',')[1]?.includes('http'))
+          .reverse();
+
+        allNewsData = rows.map(row => {
+          const cols = row.split(',').map(col => 
+            col.trim().replace(/^"(.*)"$/, '$1')
+          );
+
+          const rawTitle = cols[1] || '#';
+          const link = rawTitle.startsWith('http') ? rawTitle : '#';
+          const summary = cols[2] || '이 뉴스의 요약입니다.';
+          const date = cols[4] || new Date().toISOString().split('T')[0];
+          const category = cols[6] || '기타';
+
+          return {
+            link,
+            title: extractTitleFromLink(link),
+            summary,
+            date,
+            category,
+            source: getSource(link),
+            image: getImageForLink(link)
+          };
+        });
+
+        // 조회수 데이터 로드
+        popularNewsCount = JSON.parse(localStorage.getItem('popularNewsCount') || '{}');
+
+        // 필터 적용 후 표시
+        displayNews(allNewsData);
+        
+        // 오늘 업데이트 알림
+        updateTodayUpdate();
+        
+        // 최근 본 뉴스 표시
+        updateRecentNews();
+        
+        // 인기 뉴스 표시
+        updatePopularNews();
+
+        // 다크모드 상태 복원
+        if (localStorage.getItem('darkMode') === 'true') {
+          document.body.classList.add('dark-mode');
+        }
+
+      } catch (error) {
+        console.error('오류:', error);
+        newsList.innerHTML = `
+          <div class="text-center p-8 bg-red-50 rounded-2xl">
+            <p class="text-red-600 font-medium">로딩 실패</p>
+            <button onclick="location.reload()" class="mt-3 bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
+              다시 시도
+            </button>
+          </div>
+        `;
+      }
     }
 
     window.onload = loadNews;
